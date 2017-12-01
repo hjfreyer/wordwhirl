@@ -1,12 +1,5 @@
 import * as util from './util.js';
 
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-      let j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-  }
-}
-
 export class GameManager {
   constructor(wordList) {
     this._wordList = wordList;
@@ -22,7 +15,7 @@ export class GameManager {
     }
 
     return new Game(tiles,
-                    contain.subwords.map((i) => this._wordList.words[i]));
+      contain.subwords.map((i) => this._wordList.words[i]));
   }
 }
 
@@ -33,7 +26,7 @@ class Game {
   }
 
   start() {
-    this._perm = [...this.tiles.keys()];  // Range.
+    this._perm = [...this.tiles.keys()]; // Range.
     shuffleArray(this._perm);
     console.log(this._perm);
 
