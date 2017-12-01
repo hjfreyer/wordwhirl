@@ -1,0 +1,14 @@
+{
+  "name": "wordwhirl",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "flat": true,
+  "dependencies": {
+    "@polymer/polymer": "^3.0.0-pre.1",
+    "@webcomponents/webcomponentsjs": "^1.0.20"
+  },
+  "resolutions": {
+    "@webcomponents/webcomponentsjs": "1.0.20"
+  }
+}
