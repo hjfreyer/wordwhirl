@@ -1,5 +1,6 @@
 import { Element as PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import * as _ from '../node_modules/lodash-es/lodash.js'
 
 function makeDiv(className) {
   let res = document.createElement('div');
@@ -11,14 +12,29 @@ export class RoundView extends PolymerElement {
   static get template() {
     return `
 <style>
+  card {
+    font-size: 40px;
+  }
+
+  button {
+    font-size: 40px;
+  }
   #suggestions {
     display: flex;
-    height: 30px;
   }
 
   #working-set {
     display: flex;
-    height: 30px;
+  }
+
+  .slot {
+    border: 1px solid black;
+    width: 70px;
+    height: 70px;
+  }
+
+  #answers {
+    font-size: 20px;
   }
 </style>
 
@@ -26,10 +42,21 @@ export class RoundView extends PolymerElement {
   <div id="suggestions"></div>
   <div id="working-set"></div>
 </div>
+<div class="card">
+  <button on-click="_backspace">Back</button>
+  <button on-click="_submit">Submit</button>
+  <button on-click="_shuffle">Shuffle</button>
+  <span hidden="[[_not(_wrong)]]">Wrong</span>
+</div>
+
+<div class="card">
+  {{score}}
+</div>
 
 <div id="answers">
   <template is="dom-repeat" items="[[answers]]">
     <div hidden$="{{item.hidden}}" class="answer">{{item.word}}</div>
+    <div hidden$="{{_not(item.hidden)}}" class="hint">{{item.spaces}}</div>
   </template>
 </div>
 `
@@ -41,7 +68,9 @@ export class RoundView extends PolymerElement {
     this.answers = answers.map(a => ({
       word: a,
       hidden: true,
+      spaces: _.times(a.length, () => '_ ').join('')
     }));
+    this._wrong = false;
   }
 
   ready() {
@@ -62,14 +91,14 @@ export class RoundView extends PolymerElement {
     });
 
     this._suggestionSlots = this._tiles.map((t) => {
-      let suggestionSlot = makeDiv('suggestion-slot');
+      let suggestionSlot = makeDiv('slot');
       suggestionSlot.appendChild(t);
       this.$['suggestions'].appendChild(suggestionSlot);
       return suggestionSlot;
     });
 
     this._workingSetSlots = this._tiles.map((t) => {
-      let workingSetSlot = makeDiv('working-set-slot');
+      let workingSetSlot = makeDiv('slot');
       workingSetSlot.appendChild(t);
       this.$['working-set'].appendChild(workingSetSlot);
       return workingSetSlot;
@@ -86,8 +115,32 @@ export class RoundView extends PolymerElement {
     slot.appendChild(tile);
   }
 
+  reject() {
+    this._wrong = true;
+    window.setTimeout(() => this._wrong = false, 1000);
+  }
+
   reveal(answerIdx) {
     this.set(['answers', answerIdx, 'hidden'], false);
+  }
+
+  _backspace() {
+    this.dispatchEvent(new CustomEvent('backspace'));
+  }
+
+  _submit() {
+    this.dispatchEvent(new CustomEvent('submit'));
+  }
+  _shuffle() {
+    this.dispatchEvent(new CustomEvent('shuffle'));
+  }
+
+  _not(b) {
+    return !b;
+  }
+
+  setScore(score) {
+    this.score = score;
   }
 }
 
