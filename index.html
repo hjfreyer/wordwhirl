@@ -5,15 +5,19 @@
     <script
         src="node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js">
     </script>
-    <script type="module" src="src/view/app.js"></script>
+    <script defer src="src/view/shell.js"></script>
+    <script id="app-script" type="module" src="src/view/app.js"></script>
     <style>
 html, body {
   height: 100%;
   margin: 0;
+  position: relative;
 }
     </style>
   </head>
   <body>
-    <ww-app></ww-app>
+    <div id="loading-screen">
+      <button id="new-game">New Game</button>
+    </div>
   </body>
 </html>

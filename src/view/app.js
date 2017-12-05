@@ -9,11 +9,15 @@ class App extends PolymerElement {
     return `
 <style>
   :host {
-    display: block;
-    min-height: 100%;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    padding: 20px;
   }
 </style>
-<div id="welcome"></div>
 <div id="container"></div>
 `
   }

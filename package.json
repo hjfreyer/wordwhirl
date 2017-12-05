@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "polymer serve --npm | npm run watch",
     "test": "polymer test",
-    "watch": "browser-sync start --proxy localhost:8000 --files '*/*.html, src/*.js' "
+    "watch": "browser-sync start --proxy localhost:8000 --files '*.html, **/*.html, src/**.js' "
   },
   "resolutions": {
     "@webcomponents/webcomponentsjs": "1.0.20"
