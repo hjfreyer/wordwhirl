@@ -1,6 +1,6 @@
-import { Element as PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { Element as PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
 import { RoundView } from './round.js';
-import { GameManager } from './game.js';
+import { GameManager } from '../game.js';
 import { WORDS } from './words.js';
 
 class App extends PolymerElement {

@@ -1,6 +1,6 @@
-import { Element as PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
-import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
-import * as _ from '../node_modules/lodash-es/lodash.js'
+import { Element as PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
+import '../../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import * as _ from '../../node_modules/lodash-es/lodash.js'
 
 function makeDiv(className) {
   let res = document.createElement('div');
