@@ -12,4 +12,7 @@
     loadingScreen.parentNode.removeChild(loadingScreen);
     document.body.appendChild(document.createElement('ww-app'));
   });
+
+
+  document.getElementById('new-game').click();
 })();

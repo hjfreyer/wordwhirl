@@ -1,40 +1,46 @@
 import * as _ from '../node_modules/lodash-es/lodash.js';
 
-export class GameManager {
+export class Controller {
   constructor(wordList) {
     this._wordList = wordList;
   }
 
-  newGame() {
-    let contain = _.sample(this._wordList.containment);
+  start() {
+    return _.concat(this._newGame(), this._newRound());
+  }
 
-    let fullWord = this._wordList.words[contain.fullWord];
-    let tiles = [];
-    for (let i = 0; i < fullWord.length; i++) {
-      tiles.push(fullWord[i]);
-    }
-    tiles = _.shuffle(tiles);
+  _newGame() {
+    this._score = 0;
 
-    let answers = contain.subwords.map((i) => this._wordList.words[i]);
+    return [{
+      initGame: {}
+    }];
+  }
+
+  _newRound() {
+    let gameStructure = _.sample(this._wordList.containment);
+    let tiles = _.shuffle(
+      this._wordList.words[gameStructure.fullWord].split(''));
+    let answers = gameStructure.subwords.map(i => this._wordList.words[i]);
     answers = _.sortBy(answers, ['length', _.identity]);
 
-    let g = new Game(tiles,answers);
-    return g;
-  }
-}
-
-class Game {
-  constructor(tiles, answers) {
-    this.tiles = tiles;
-    this.answers = answers;
-    this._score = 0;
     this._tiles = tiles.map((t, idx) => ({
       letter: t,
       slotIdx: idx,
       isSuggestion: false,
     }));
-    this._available = [...this.tiles.keys()]; // Range
+    this._available = [...tiles.keys()]; // Range
     this._suggestions = [];
+    this._answers = answers;
+
+    this._endTime = Date.now() + 180 * 1000;
+    return [{
+      initRound: {
+        tiles: tiles,
+        answers: answers,
+        endTime: this._endTime,
+      }
+    }];
   }
 
   selectTile(tileIdx) {
@@ -49,22 +55,17 @@ class Game {
       this._available[tile.slotIdx] = -1;
       tile.slotIdx = this._suggestions.length - 1;
       tile.isSuggestion = true;
-      return [{move: {
-        tileIdx: tileIdx,
-        slotIdx: tile.slotIdx,
-        isSuggestion: tile.isSuggestion,
-      }}];
+      return [{
+        move: {
+          tileIdx: tileIdx,
+          slotIdx: tile.slotIdx,
+          isSuggestion: tile.isSuggestion,
+        }
+      }];
     }
     return [];
   }
 
-  _nthEmpty(n) {
-    let res = -1;
-    for (let i = 0; i < n + 1; i++) {
-      res = _.findIndex(this._available, s => s == -1, res + 1);
-    }
-    return res;
-  }
 
   backspace() {
     if (this._suggestions.length == 0) {
@@ -79,28 +80,42 @@ class Game {
     this._suggestions.pop();
     tile.slotIdx = dest;
     tile.isSuggestion = false;
-    return [{move: {
-      tileIdx: tileIdx,
-      slotIdx: tile.slotIdx,
-      isSuggestion: tile.isSuggestion,
-    }}];
+    return [{
+      move: {
+        tileIdx: tileIdx,
+        slotIdx: tile.slotIdx,
+        isSuggestion: tile.isSuggestion,
+      }
+    }];
   }
 
+  _nthEmpty(n) {
+    let res = -1;
+    for (let i = 0; i < n + 1; i++) {
+      res = _.findIndex(this._available, s => s == -1, res + 1);
+    }
+    return res;
+  }
+
+
   submit() {
-    let guess = this._suggestions.map(tileIdx => this.tiles[tileIdx]).join('');
-    let answerIdx = this.answers.indexOf(guess);
+    let guess = this._suggestions.map(tileIdx => this._tiles[tileIdx].letter).join('');
+    let answerIdx = this._answers.indexOf(guess);
     if (answerIdx != -1) {
-      this._score++;
-      let res = [{reveal: {answerIdx: answerIdx}}, {setScore: {
-        score: `${this._score}/${this.answers.length}`
-      }}];
+      let res = [{
+        reveal: {
+          answerIdx: answerIdx
+        }
+      }];
       res = _.flatten(_.concat([res], _.times(guess.length, this.backspace.bind(this))));
-      console.log(res);
       return res;
     } else {
-      return [{reject: {}}];
+      return [{
+        reject: {}
+      }];
     }
   }
+
 
   // TODO: This could be a bit prettier by only swapping filled slots, not
   // moving things to entirely new slots.
@@ -113,11 +128,13 @@ class Game {
       newAvailable[perm[i]] = this._available[i];
       if (this._available[i] != -1) {
         this._tiles[this._available[i]].slotIdx = perm[i];
-        res.push({move: {
-          tileIdx: this._available[i],
-          slotIdx: perm[i],
-          isSuggestion: false,
-        }});
+        res.push({
+          move: {
+            tileIdx: this._available[i],
+            slotIdx: perm[i],
+            isSuggestion: false,
+          }
+        });
       }
     }
 
