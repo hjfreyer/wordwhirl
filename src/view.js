@@ -1,9 +1,8 @@
-import { Element as PolymerElement } from '../../node_modules/@polymer/polymer/polymer-element.js';
-import { RoundView } from './round.js';
-import { Controller } from '../game.js';
-import { GameView } from './game.js';
+import { Element as PolymerElement } from '../node_modules/@polymer/polymer/polymer-element.js';
+import { Controller } from './game.js';
 import { WORDS } from './words.js';
-import * as _ from '../../node_modules/lodash-es/lodash.js'
+import * as _ from '../node_modules/lodash-es/lodash.js'
+import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 
 class App extends PolymerElement {
 
@@ -118,8 +117,6 @@ class App extends PolymerElement {
   ready() {
     super.ready();
     this.doActions(this._c.start());
-    return;
-    this.$.container.appendChild(this._roundView);
   }
 
   select(selectEvent) {
