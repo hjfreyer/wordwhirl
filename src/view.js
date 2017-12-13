@@ -40,6 +40,11 @@ class App extends PolymerElement {
     display: flex;
   }
 
+  .tile {
+    width: 70px;
+    height: 70px;
+  }
+
   .slot {
     border: 1px solid black;
     width: 70px;
@@ -80,12 +85,12 @@ class App extends PolymerElement {
 <div>
   <div id="suggestions">
     <template is="dom-repeat" items="[[suggestions]]">
-      <button on-click="select">[[item.letter]]</button>
+      <button class="tile" on-click="select">[[item.letter]]</button>
     </template>
   </div>
   <div id="working-set">
     <template is="dom-repeat" items="[[available]]">
-      <button on-click="select">[[item.letter]]</button>
+      <button class="tile" on-click="select">[[item.letter]]</button>
     </template>
   </div>
   <div class="card">
