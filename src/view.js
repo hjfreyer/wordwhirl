@@ -4,6 +4,7 @@ import { WORDS } from './words.js';
 import * as _ from '../node_modules/lodash-es/lodash.js'
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
 import * as util from './util.js'
+import * as layout from './layout.js'
 
 class App extends PolymerElement {
 
@@ -18,6 +19,11 @@ class App extends PolymerElement {
     left: 0;
 
     padding: 20px;
+
+  }
+  * {
+
+    box-sizing:border-box;
   }
   card {
     font-size: 40px;
@@ -40,8 +46,20 @@ class App extends PolymerElement {
     height: 70px;
   }
 
+  .box {
+    position: absolute;
+    border: 1px solid grey;
+    margin: -1px;
+  }
+
   #answers {
+    position: relative;
+
     font-size: 20px;
+
+    border: 1px solid grey;
+    width: 500px;
+    height: 700px;
   }
 </style>
 <div class="card" id="scoreboard">
@@ -79,9 +97,10 @@ class App extends PolymerElement {
 </div>
 
 <div id="answers">
-  <template is="dom-repeat" items="[[answers]]">
-    <div hidden$="{{item.hidden}}" class="answer">{{item.word}}</div>
-    <div hidden$="{{!item.hidden}}" class="hint">{{item.spaces}}</div>
+  <template is="dom-repeat" items="[[answers]]" as="answer" index-as="answerIdx">
+    <template is="dom-repeat" items="[[lettersOf(answer.word)]]" as="letter" index-as="letterIdx">
+      <div class="box" style$="[[styleOf(answerIdx, letterIdx)]]"><span hidden$="[[answer.hidden]]">[[letter]]</span></div>
+    </template>
   </template>
 </div>
 `
@@ -131,13 +150,40 @@ class App extends PolymerElement {
     this._resetButtons();
   }
 
+  lettersOf(word) {
+    return word.split('');
+  }
+
+  styleOf(wordIdx, letterIdx) {
+    let lh = new layout.LayoutHelper(this._layout);
+
+    let pos = lh.getLetterCoordinates(wordIdx, letterIdx);
+    return `
+      left: ${pos.x}px;
+      top: ${pos.y}px;
+      width: ${this._layout.sizePx}px;
+      height: ${this._layout.sizePx}px;
+    `;
+  }
 
   nextRound() {
     this._newRound();
   }
-  // ready() {
-  //   super.ready();
-  // }
+   ready() {
+     super.ready();
+
+     let answers = _.map(this.answers, 'word');
+
+     this._layout = layout.optimalNumberOfRows(answers, 70, 0.2, 1.2, this.$.answers.offsetWidth, this.$.answers.offsetHeight);
+
+     answers.forEach((a, wordIdx) => {
+       for (let letterIdx = 0; letterIdx < a.length; letterIdx++) {
+         let box = document.createElement('div');
+         box.className = 'box';
+         this.$.answers.appendChild(box);
+       }
+     });
+   }
 
 
   _updateTime() {
