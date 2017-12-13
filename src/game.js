@@ -1,23 +1,29 @@
 import * as _ from '../node_modules/lodash-es/lodash.js';
 
+const ROUND_LENGTH_SEC = 180;
+
+const STATE_WAITING_FOR_NEXT_GAME = 'WAITING_FOR_NEXT_GAME';
+const STATE_WAITING_FOR_NEXT_ROUND = 'WAITING_FOR_NEXT_ROUND';
+const STATE_ROUND = 'ROUND';
+
 export class Controller {
   constructor(wordList) {
     this._wordList = wordList;
+
+    this._state = STATE_WAITING_FOR_NEXT_GAME;
   }
 
-  start() {
-    return _.concat(this._newGame(), this._newRound());
-  }
+  newGame() {
+    this._checkState(STATE_WAITING_FOR_NEXT_GAME) ;
 
-  _newGame() {
+    this._state = STATE_WAITING_FOR_NEXT_ROUND;
     this._score = 0;
-
-    return [{
-      initGame: {}
-    }];
+    return {};
   }
 
-  _newRound() {
+  newRound() {
+    this._checkState(STATE_WAITING_FOR_NEXT_ROUND) ;
+
     let gameStructure = _.sample(this._wordList.containment);
     let tiles = _.shuffle(
       this._wordList.words[gameStructure.fullWord].split(''));
@@ -29,25 +35,32 @@ export class Controller {
       slotIdx: idx,
       isSuggestion: false,
     }));
+    this._answers = answers.map(a => ({
+      answer: a,
+      guessed: false,
+    }));
     this._available = [...tiles.keys()]; // Range
     this._suggestions = [];
-    this._answers = answers;
+    this._endTime = Date.now() + ROUND_LENGTH_SEC * 1000;
 
-    this._endTime = Date.now() + 180 * 1000;
-    return [{
-      initRound: {
-        tiles: tiles,
-        answers: answers,
-        endTime: this._endTime,
-      }
-    }];
+    this._state = STATE_ROUND;
+
+    return {
+      tiles: tiles,
+      answers: answers,
+      endTime: this._endTime,
+    };
   }
 
   selectTile(tileIdx) {
+    this._checkState(STATE_ROUND);
+
     let tile = this._tiles[tileIdx];
     if (tile.isSuggestion) {
       if (tile.slotIdx != this._suggestions.length - 1) {
-        return [];
+        return {
+          moves: []
+        };
       }
       return this.backspace();
     } else {
@@ -55,23 +68,49 @@ export class Controller {
       this._available[tile.slotIdx] = -1;
       tile.slotIdx = this._suggestions.length - 1;
       tile.isSuggestion = true;
-      return [{
-        move: {
+      return {
+        moves: [{
           tileIdx: tileIdx,
-          slotIdx: tile.slotIdx,
-          isSuggestion: tile.isSuggestion,
-        }
-      }];
+          position: {
+            slot: tile.slotIdx,
+            isSuggestion: tile.isSuggestion,
+
+          }
+        }]
+      };
     }
-    return [];
+    return {
+      moves: []
+    };
   }
 
+  heartbeat() {
+    if (this._state != STATE_ROUND) {
+      return {};
+    }
+    if (this._endTime < Date.now()) {
+      this._state = STATE_WAITING_FOR_NEXT_ROUND;
+      return {
+        roundEnd: {},
+      };
+    }
+    return {};
+  }
 
   backspace() {
+    this._checkState(STATE_ROUND);
     if (this._suggestions.length == 0) {
-      return [];
+      return {
+        moves: []
+      };
     }
 
+    return {
+      moves: [this._doBackspace()]
+    };
+  }
+
+  _doBackspace() {
     let tileIdx = this._suggestions[this._suggestions.length - 1];
     let tile = this._tiles[tileIdx];
 
@@ -80,13 +119,13 @@ export class Controller {
     this._suggestions.pop();
     tile.slotIdx = dest;
     tile.isSuggestion = false;
-    return [{
-      move: {
-        tileIdx: tileIdx,
-        slotIdx: tile.slotIdx,
+    return {
+      tileIdx: tileIdx,
+      position: {
+        slot: tile.slotIdx,
         isSuggestion: tile.isSuggestion,
       }
-    }];
+    };
   }
 
   _nthEmpty(n) {
@@ -99,20 +138,38 @@ export class Controller {
 
 
   submit() {
+    this._checkState(STATE_ROUND);
+
     let guess = this._suggestions.map(tileIdx => this._tiles[tileIdx].letter).join('');
-    let answerIdx = this._answers.indexOf(guess);
+    let answerIdx = _.findIndex(this._answers, {
+      'answer': guess
+    });
     if (answerIdx != -1) {
-      let res = [{
-        reveal: {
-          answerIdx: answerIdx
+      if (this._answers[answerIdx].guessed) {
+        return {
+          duplicate: {
+            answerIdx: answerIdx
+          },
+          score: this._score,
+          moves: _.times(guess.length, this._doBackspace.bind(this)),
         }
-      }];
-      res = _.flatten(_.concat([res], _.times(guess.length, this.backspace.bind(this))));
-      return res;
+      } else {
+        this._answers[answerIdx].guessed = true;
+        this._score += guess.length * guess.length;
+        return {
+          accept: {
+            answerIdx: answerIdx,
+          },
+          score: this._score,
+          moves: _.times(guess.length, this._doBackspace.bind(this)),
+        };
+      }
     } else {
-      return [{
-        reject: {}
-      }];
+      return {
+        reject: {},
+        score: this._score,
+        moves: [],
+      };
     }
   }
 
@@ -120,7 +177,9 @@ export class Controller {
   // TODO: This could be a bit prettier by only swapping filled slots, not
   // moving things to entirely new slots.
   shuffle() {
-    let res = [];
+    this._checkState(STATE_ROUND);
+
+    let moves = [];
 
     let perm = _.shuffle(_.range(6));
     let newAvailable = [];
@@ -128,10 +187,10 @@ export class Controller {
       newAvailable[perm[i]] = this._available[i];
       if (this._available[i] != -1) {
         this._tiles[this._available[i]].slotIdx = perm[i];
-        res.push({
-          move: {
-            tileIdx: this._available[i],
-            slotIdx: perm[i],
+        moves.push({
+          tileIdx: this._available[i],
+          position: {
+            slot: perm[i],
             isSuggestion: false,
           }
         });
@@ -139,16 +198,28 @@ export class Controller {
     }
 
     this._available = newAvailable;
-    return res;
+    return {
+      moves: moves
+    };
   }
 
   typeCharacter(char) {
+    this._checkState(STATE_ROUND);
+
     // TODO: Select the leftmost matching letter.
     let index = _.findIndex(this._tiles, (t) => t.letter == char && !t.isSuggestion);
     if (index == -1) {
-      return [];
+      return {
+        moves: []
+      };
     }
 
     return this.selectTile(index);
+  }
+
+  _checkState(expectedState) {
+    if (this._state != expectedState) {
+      throw 'Invalid game state';
+    }
   }
 }

@@ -3,6 +3,7 @@ import { Controller } from './game.js';
 import { WORDS } from './words.js';
 import * as _ from '../node_modules/lodash-es/lodash.js'
 import '../node_modules/@polymer/polymer/lib/elements/dom-repeat.js';
+import * as util from './util.js'
 
 class App extends PolymerElement {
 
@@ -47,27 +48,34 @@ class App extends PolymerElement {
   <label>Score: </label><span>[[score]]</span>
   <label>Time left: </label><span>[[time]]</span>
 </div>
-<div class="card">
+
+<div hidden="[[!showRoundOver]]">
+  Round Over!
+  <button on-click="nextRound">Next Round</button>
+</div>
+
+<div hidden="[[!showGameOver]]">
+  Game Over!
+  <button on-click="newGame">New Game</button>
+</div>
+
+<div>
   <div id="suggestions">
     <template is="dom-repeat" items="[[suggestions]]">
-      <button on-click="select">[[_getTile(item)]]</button>
+      <button on-click="select">[[item.letter]]</button>
     </template>
   </div>
   <div id="working-set">
     <template is="dom-repeat" items="[[available]]">
-      <button on-click="select">[[_getTile(item)]]</button>
+      <button on-click="select">[[item.letter]]</button>
     </template>
   </div>
-</div>
-<div class="card">
-  <button on-click="backspace">Back</button>
-  <button on-click="_submit">Submit</button>
-  <button on-click="_shuffle">Shuffle</button>
-  <span hidden$="[[!_wrong]]">Wrong</span>
-</div>
-
-<div class="card">
-  {{score}}
+  <div class="card">
+    <button on-click="backspace">Back</button>
+    <button on-click="_submit">Submit</button>
+    <button on-click="_shuffle">Shuffle</button>
+    <span hidden$="[[!wrong]]">Wrong</span>
+  </div>
 </div>
 
 <div id="answers">
@@ -82,74 +90,102 @@ class App extends PolymerElement {
   constructor() {
     super();
     this._c = new Controller(WORDS);
+    this._newGame();
+    this._newRound()
 
-    this.score = 0;
-    this.time = "3:00";
+    this.wrong = false;
+    this.showRoundOver = false;
+    this.showGameOver = false;
 
-    document.addEventListener('keydown', (e) => {
-      let charCode = e.keyCode;
-      const [a, z, A, Z] = ['a', 'z', 'A', 'Z'].map((s) => s.charCodeAt(0));
-      if (a <= charCode && charCode <= z) {
-        this.doActions(this._c.typeCharacter(String.fromCharCode(charCode)));
-        return;
-      }
-
-      if (A <= charCode && charCode <= Z) {
-        this.doActions(this._c.typeCharacter(String.fromCharCode(charCode - A + a)));
-      }
-
-      if (e.code == 'Backspace') {
-        this.backspace();
-      }
-
-      if (e.code == 'Enter') {
-        this.doActions(this._c.submit());
-      }
-
-      if (e.code == 'Space') {
-        this.doActions(this._c.shuffle());
-      }
-      e.preventDefault();
-      return false;
-    });
+    document.addEventListener('keydown', this._handleKeydown.bind(this));
+    setInterval(this._heartbeat.bind(this), 1000);
   }
 
-  ready() {
-    super.ready();
-    this.doActions(this._c.start());
+  _newGame() {
+    this._c.newGame();
+    this.score = 0;
+    this.showGameOver = false;
+  }
+
+  _newRound() {
+    this.showRoundOver = false;
+
+    let resp = this._c.newRound();
+    console.log(this._c);
+
+    this.tiles = resp.tiles.map((t, idx) => ({
+      letter: t,
+      idx: idx,
+      position: {
+        slot: idx,
+        isSuggestion: false
+      },
+    }));
+    this.answers = resp.answers.map(a => ({
+      word: a,
+      hidden: true,
+      spaces: _.times(a.length, () => '_ ').join('')
+    }));
+    this._endTime = resp.endTime;
+
+    this._resetButtons();
+  }
+
+
+  nextRound() {
+    this._newRound();
+  }
+  // ready() {
+  //   super.ready();
+  // }
+
+
+  _updateTime() {
+    let timeLeft = Math.max(0, this._endTime - Date.now());
+    this.time = util.formatMillis(timeLeft);
+  }
+
+  _heartbeat() {
+    this._updateTime();
+    let resp = this._c.heartbeat();
+    if (resp.roundEnd) {
+      this.showRoundOver = true;
+    }
+  }
+
+  _handleKeydown(e) {
+    let charCode = e.keyCode;
+    const [a, z, A, Z] = ['a', 'z', 'A', 'Z'].map((s) => s.charCodeAt(0));
+    if (a <= charCode && charCode <= z) {
+      this._typeChar(String.fromCharCode(charCode));
+    } else if (A <= charCode && charCode <= Z) {
+      this._typeChar(String.fromCharCode(charCode - A + a));
+    } else if (e.code == 'Backspace') {
+      e.preventDefault();
+      this._backspace();
+    } else if (e.code == 'Enter') {
+      e.preventDefault();
+      this._submit();
+    } else if (e.code == 'Space') {
+      e.preventDefault();
+      this._shuffle();
+    }
+    return false;
+  }
+
+  _typeChar(c) {
+    this._moveTiles( this._c.typeCharacter(c).moves);
   }
 
   select(selectEvent) {
     if (selectEvent.model.item == -1) {
       return;
     }
-    this.doActions(this._c.selectTile(selectEvent.model.item));
+    this._moveTiles( this._c.selectTile(selectEvent.model.item.idx).moves);
   }
 
-  backspace() {
-    this.doActions(this._c.backspace());
-  }
-
-  doActions(actions) {
-    console.log(actions);
-    for (let a of actions) {
-      if (a.move) {
-        this._moveTile(a.move.tileIdx, {
-          slot: a.move.slotIdx,
-          isSuggestion: a.move.isSuggestion
-        });
-      } else if (a.reveal) {
-        this.reveal(a.reveal.answerIdx);
-      } else if (a.setScore) {
-        //this._roundView.setScore(a.setScore.score);
-      } else if (a.reject) {
-        this.reject();
-      } else if (a.initGame) {
-        this.initGame();
-      } else if (a.initRound) {
-        this.initRound(a.initRound.tiles, a.initRound.answers, a.initRound.endTime);
-      }
-    }
+  _moveTiles(moves) {
+    moves.forEach(m => this._moveTile(m.tileIdx, m.position));
   }
 
   _moveTile(tileIdx, pos) {
@@ -158,65 +194,42 @@ class App extends PolymerElement {
   }
 
   _resetButtons() {
-    let suggestions = this.tiles.map(() => -1);
-    let available = this.tiles.map(() => -1);
+    let suggestions = this.tiles.map(() => ({letter: '', idx: -1}));
+    let available = this.tiles.map(() => ({letter: '', idx: -1}));
     this.tiles.map((t, idx) => {
-      (t.position.isSuggestion ? suggestions : available)[t.position.slot] = idx;
+      (t.position.isSuggestion ? suggestions : available)[t.position.slot] = {
+        letter: t.letter,
+        idx: idx,
+      };
     });
 
     this.suggestions = suggestions;
     this.available = available;
   }
 
-  initGame() {
-    //   this._gameView = new GameView();
-    //    this.$['game-area'].appendChild(this._gameView);
-  }
-
-  _getTile(idx) {
-    if (idx == -1) {
-      return '';
-    }
-    return this.tiles[idx].letter;
-  }
-
-  initRound(tiles, answers, endTime) {
-    this.tiles = tiles.map((t, idx) => ({
-      letter: t,
-      idx: idx,
-      position: {
-        slot: idx,
-        isSuggestion: false
-      },
-    }));
-    this._resetButtons();
-    this.answers = answers.map(a => ({
-      word: a,
-      hidden: true,
-      spaces: _.times(a.length, () => '_ ').join('')
-    }));
-    this.time = endTime;
-    this.wrong = false;
-  //    this._gameView.setEndTime(endTime);
-  //    this._gameView.createRound(tiles, answers);
-  }
-
-
-  reject() {
-    this._wrong = true;
-    window.setTimeout(() => this._wrong = false, 1000);
-  }
-
-  reveal(answerIdx) {
+  _reveal(answerIdx) {
     this.set(['answers', answerIdx, 'hidden'], false);
   }
 
   _submit() {
-    this.doActions(this._c.submit());
+    let resp = this._c.submit();
+    this.score = resp.score;
+    this._moveTiles(resp.moves);
+    if (resp.accept) {
+      this._reveal(resp.accept.answerIdx);
+    }
+    if (resp.reject) {
+      this.wrong = true;
+      window.setTimeout(() => this.wrong = false, 1000);
+    }
   }
 
   _shuffle() {
-    this.doActions(this._c.shuffle());
+    this._moveTiles(this._c.shuffle().moves);
+  }
+
+  _backspace() {
+this._moveTiles(this._c.backspace().moves);
   }
 }
 
