@@ -2,7 +2,7 @@
 
 import * as _ from '../node_modules/lodash-es/lodash.js'
 
-export function optimalNumberOfRows(answers, maxSizePx, rowGutterFraction, minColumnGutterFraction,
+export function optimalNumberOfRows2(answers, maxSizePx, rowGutterFraction, minColumnGutterFraction,
   containerWidthPx, containerHeightPx) {
   let maxRowSizeWithGutters = maxSizePx * (1 + rowGutterFraction);
   let numRowsAtMaxSize = Math.floor(containerHeightPx / maxRowSizeWithGutters);
@@ -31,6 +31,61 @@ export function optimalNumberOfRows(answers, maxSizePx, rowGutterFraction, minCo
     };
   }
   throw 'Cannot make it fit';
+}
+
+function getAspectRatio(answers, numRows, rowGutterFraction, columnGutterFraction) {
+  let columns = _.chunk(answers, numRows);
+  let columnsWidths = columns.map(c => _.last(c).length);
+
+  let width = _.sum(columnsWidths) + columns.length * columnGutterFraction;
+  let height = numRows * (1 + rowGutterFraction);
+
+  return width / height;
+}
+
+export function getOptimalLayout(answers, rowGutterFraction, columnGutterFraction, containerAspectRatio) {
+  let numRowsOptions = _.range(1, 1 + answers.length);
+  let getAr = numRows => {
+    let ar = getAspectRatio(answers, numRows, rowGutterFraction, columnGutterFraction);
+    if (ar < containerAspectRatio) {
+      return containerAspectRatio - ar;
+    } else {
+      return (1 - containerAspectRatio / ar) * containerAspectRatio;
+    }
+  };
+  let minLoss = _.minBy(numRowsOptions, getAr);
+
+  return {
+    numRows: minLoss,
+    aspect: getAspectRatio(answers, minLoss, rowGutterFraction, columnGutterFraction),
+  }
+}
+
+export function optimalNumberOfRows(answers, maxSizePx, rowGutterFraction, columnGutterFraction,
+  containerWidthPx, containerHeightPx) {
+  let containerAspect = containerWidthPx / containerHeightPx;
+  let layout = getOptimalLayout(answers, rowGutterFraction, columnGutterFraction, containerAspect);
+  let numRows = layout.numRows;
+
+  let columns = _.chunk(answers, layout.numRows);
+  let columnsWidths = columns.map(c => _.last(c).length);
+
+  let sizePx = 0;
+  if (layout.aspect < containerAspect) {
+    // Limited by height.
+    sizePx = containerHeightPx / (numRows + numRows * rowGutterFraction);
+  } else {
+    // Limited by width.
+    sizePx = containerWidthPx / (_.sum(columnsWidths) + columns.length * columnGutterFraction);
+  }
+  sizePx = Math.min(maxSizePx, Math.floor(sizePx));
+  return {
+    sizePx: sizePx,
+    numRows: numRows,
+    rowGutterSize: Math.floor(sizePx * rowGutterFraction),
+    columnGutterSize: Math.floor(sizePx * columnGutterFraction),
+    columnsWidths: columnsWidths,
+  };
 }
 
 export class LayoutHelper {
