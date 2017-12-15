@@ -18,8 +18,10 @@ class App extends PolymerElement {
     bottom: 0;
     left: 0;
 
-    padding: 20px;
+    display: flex;
 
+    flex-flow: column nowrap;
+    align-items: center;
   }
   * {
 
@@ -34,10 +36,12 @@ class App extends PolymerElement {
   }
   #suggestions {
     display: flex;
+    height: 70px;
   }
 
   #working-set {
     display: flex;
+    height: 70px;
   }
 
   .tile {
@@ -63,8 +67,9 @@ class App extends PolymerElement {
     font-size: 20px;
 
     border: 1px solid grey;
-    width: 500px;
-    height: 700px;
+
+    align-self: stretch;
+    flex: 1;
   }
 </style>
 <div class="card" id="scoreboard">
