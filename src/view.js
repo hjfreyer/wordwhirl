@@ -171,29 +171,29 @@ class App extends PolymerElement {
     return `
       left: ${pos.x}px;
       top: ${pos.y}px;
-      width: ${this._layout.sizePx}px;
-      height: ${this._layout.sizePx}px;
+      width: ${this._layout.tileSizePx}px;
+      height: ${this._layout.tileSizePx}px;
     `;
   }
 
   nextRound() {
     this._newRound();
   }
-   ready() {
-     super.ready();
+  ready() {
+    super.ready();
 
-     let answers = _.map(this.answers, 'word');
+    let answers = _.map(this.answers, 'word');
 
-     this._layout = layout.optimalNumberOfRows(answers, 70, 0.2, 1.2, this.$.answers.offsetWidth, this.$.answers.offsetHeight);
+    this._layout = layout.getOptimalLayout(answers, 0.2, 1.2, this.$.answers.offsetWidth, this.$.answers.offsetHeight);
 
-     answers.forEach((a, wordIdx) => {
-       for (let letterIdx = 0; letterIdx < a.length; letterIdx++) {
-         let box = document.createElement('div');
-         box.className = 'box';
-         this.$.answers.appendChild(box);
-       }
-     });
-   }
+    answers.forEach((a, wordIdx) => {
+      for (let letterIdx = 0; letterIdx < a.length; letterIdx++) {
+        let box = document.createElement('div');
+        box.className = 'box';
+        this.$.answers.appendChild(box);
+      }
+    });
+  }
 
 
   _updateTime() {
@@ -230,14 +230,14 @@ class App extends PolymerElement {
   }
 
   _typeChar(c) {
-    this._moveTiles( this._c.typeCharacter(c).moves);
+    this._moveTiles(this._c.typeCharacter(c).moves);
   }
 
   select(selectEvent) {
     if (selectEvent.model.item == -1) {
       return;
     }
-    this._moveTiles( this._c.selectTile(selectEvent.model.item.idx).moves);
+    this._moveTiles(this._c.selectTile(selectEvent.model.item.idx).moves);
   }
 
   _moveTiles(moves) {
@@ -250,8 +250,14 @@ class App extends PolymerElement {
   }
 
   _resetButtons() {
-    let suggestions = this.tiles.map(() => ({letter: '', idx: -1}));
-    let available = this.tiles.map(() => ({letter: '', idx: -1}));
+    let suggestions = this.tiles.map(() => ({
+      letter: '',
+      idx: -1
+    }));
+    let available = this.tiles.map(() => ({
+      letter: '',
+      idx: -1
+    }));
     this.tiles.map((t, idx) => {
       (t.position.isSuggestion ? suggestions : available)[t.position.slot] = {
         letter: t.letter,
@@ -285,7 +291,7 @@ class App extends PolymerElement {
   }
 
   _backspace() {
-this._moveTiles(this._c.backspace().moves);
+    this._moveTiles(this._c.backspace().moves);
   }
 }
 
