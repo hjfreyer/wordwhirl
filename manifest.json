@@ -1,0 +1,8 @@
+{
+  "name": "wordwhirl",
+  "short_name": "wordwhirl",
+  "description": "A game with words.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "portrait"
+}
