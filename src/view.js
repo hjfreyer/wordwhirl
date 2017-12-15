@@ -202,7 +202,6 @@ class App extends PolymerElement {
     });
   }
 
-
   _updateTime() {
     let timeLeft = Math.max(0, this._endTime - Date.now());
     this.time = util.formatMillis(timeLeft);
@@ -213,6 +212,9 @@ class App extends PolymerElement {
     let resp = this._c.heartbeat();
     if (resp.roundEnd) {
       this.showRoundOver = true;
+      for (let answerIdx of resp.roundEnd.reveal) {
+        this._reveal(answerIdx);
+      }
     }
   }
 

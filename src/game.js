@@ -90,8 +90,13 @@ export class Controller {
     }
     if (this._endTime < Date.now()) {
       this._state = STATE_WAITING_FOR_NEXT_ROUND;
+      let toReveal = _.filter([...this._answers.keys()],
+        idx => !this._answers[idx].guessed);
+
       return {
-        roundEnd: {},
+        roundEnd: {
+          reveal: toReveal,
+        },
       };
     }
     return {};
