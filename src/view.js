@@ -22,6 +22,8 @@ class App extends PolymerElement {
 
     flex-flow: column nowrap;
     align-items: center;
+
+    font-family: Roboto;
   }
   * {
 
@@ -47,6 +49,7 @@ class App extends PolymerElement {
   .tile {
     width: 70px;
     height: 70px;
+    text-transform: uppercase;
   }
 
   .slot {
@@ -58,7 +61,10 @@ class App extends PolymerElement {
   .box {
     position: absolute;
     border: 1px solid grey;
-    margin: -1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   #answers {
@@ -173,6 +179,7 @@ class App extends PolymerElement {
       top: ${pos.y}px;
       width: ${this._layout.tileSizePx}px;
       height: ${this._layout.tileSizePx}px;
+      font-size: ${this._layout.tileSizePx * 0.63}px;
     `;
   }
 
