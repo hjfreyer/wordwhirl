@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
 
     <title>wordwhirl</title>
     <meta name="description" content="A game with words.">
@@ -11,10 +12,19 @@
     <link rel="manifest" href="/manifest.json">
 
     <script src="/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-
-    <link rel="import" href="/src/ww-app/ww-app.html">
+    <script defer src="src/shell.js"></script>
+    <link async id="app-script" rel="import" href="/src/ww-app/ww-app.html">
   </head>
   <body>
-    <ww-app></ww-app>
+    <style>
+html, body {
+  height: 100%;
+  margin: 0;
+  position: relative;
+}
+    </style>
+    <div id="loading-screen">
+      <button id="new-game">New Game</button>
+    </div>
   </body>
 </html>
