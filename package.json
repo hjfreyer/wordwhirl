@@ -1,0 +1,21 @@
+{
+  "name": "wordwhirl",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "git+https://github.com/hjfreyer/wordwhirl.git",
+  "author": "Hunter Freyer <yt@hjfreyer.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hjfreyer/wordwhirl/issues"
+  },
+  "homepage": "https://github.com/hjfreyer/wordwhirl#readme",
+  "devDependencies": {
+    "ts-loader": "^3.2.0",
+    "typescript": "^2.6.2",
+    "webpack": "^3.10.0"
+  }
+}
