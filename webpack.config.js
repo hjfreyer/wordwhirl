@@ -1,10 +1,13 @@
 const path = require('path');
 
 module.exports = {
-  entry: './src/app.ts',
+  entry: {
+    app: './src/app.ts',
+  },
   output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, 'dist')
+    filename: '[name].bundle.js',
+    path: path.resolve(__dirname, 'dist') ,
+    chunkFilename: '[name].bundle.js',
   },
   resolve: {
   extensions: [ '.tsx', '.ts', '.js', '.json' ]
@@ -16,7 +19,6 @@ module.exports = {
         use: 'ts-loader',
         exclude: /node_modules/
       },
-{test: /\.json$/, loader: 'json-loader'}
     ]
   },
   devServer: {
