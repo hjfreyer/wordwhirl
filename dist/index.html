@@ -11,9 +11,9 @@
     <!-- See https://goo.gl/OOhYW5 -->
     <link rel="manifest" href="/manifest.json">
 
-    <!--script src="/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-    <script defer src="src/shell.js"></script>
-    <link async id="app-script" rel="import" href="/src/ww-app/ww-app.html"-->
+    <!--script
+        src="node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js">
+    </script-->
   </head>
   <body>
     <style>
@@ -26,6 +26,7 @@ html, body {
     <div id="loading-screen">
       <button id="new-game">New Game</button>
     </div>
+    <my-app></my-app>
     <script src="bundle.js"></script>
   </body>
 </html>
