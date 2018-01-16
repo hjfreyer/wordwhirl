@@ -7,7 +7,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   resolve: {
-  extensions: [ '.tsx', '.ts', '.js' ]
+  extensions: [ '.tsx', '.ts', '.js', '.json' ]
 },
   module: {
     rules: [
@@ -15,7 +15,8 @@ module.exports = {
         test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/
-      }
+      },
+{test: /\.json$/, loader: 'json-loader'}
     ]
   },
   devServer: {
