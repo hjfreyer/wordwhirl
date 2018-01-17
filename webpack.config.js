@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    app: './src/app.ts',
+    shell: './src/shell.ts',
   },
   output: {
     filename: '[name].bundle.js',
@@ -10,7 +10,7 @@ module.exports = {
     chunkFilename: '[name].bundle.js',
   },
   resolve: {
-  extensions: [ '.tsx', '.ts', '.js', '.json' ]
+  extensions: [ '.tsx', '.ts', '.js' ]
 },
   module: {
     rules: [
