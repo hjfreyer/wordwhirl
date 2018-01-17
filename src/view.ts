@@ -1,7 +1,8 @@
-import { Controller, WordList } from './game.ts';
-import * as _ from '../node_modules/lodash-es/lodash.js'
-import * as util from './util.ts'
-import * as layout from './layout.ts'
+import { Controller } from './game';
+import * as t from './types';
+import * as _ from 'lodash'
+import * as util from './util'
+import * as layout from './layout'
 import "../node_modules/@polymer/polymer/lib/elements/dom-repeat.js";
 
 // Element is the same as Polymer.Element in 2.x
@@ -142,7 +143,7 @@ export class MyApp extends PolymerElement {
   time: string
   suggestions:any[]
   available: any[]
-  constructor(words : WordList) {
+  constructor(words : t.WordList) {
     super();
     this._c = new Controller(words);
     this._newGame();
