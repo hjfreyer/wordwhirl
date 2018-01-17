@@ -1,4 +1,5 @@
 (function() {
+  // @ts-ignore
   const libLoaded = import(/* webpackChunkName: "app" */ './app.ts');
   const dataLoaded = import(/* webpackChunkName: "data" */ '../words/data/words.json');
 
@@ -6,11 +7,13 @@
     document.getElementById('new-game').addEventListener('click', resolve)
   );
 
-  Promise.all([libLoaded, dataLoaded, buttonPressed]).then(() => {
+  Promise.all([libLoaded, dataLoaded, buttonPressed]).then(([lib, data, button]) => {
     console.log('loaded');
     const loadingScreen = document.getElementById('loading-screen');
     loadingScreen.parentNode.removeChild(loadingScreen);
-    document.body.appendChild(document.createElement('ww-app'));
+
+    // @ts-ignore
+    document.body.appendChild(new lib.MyApp(data));
   });
 
   document.getElementById('new-game').click();

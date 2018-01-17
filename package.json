@@ -21,6 +21,8 @@
   },
   "dependencies": {
     "@polymer/polymer": "^3.0.0-pre.3",
-    "@webcomponents/webcomponentsjs": "^1.0.22"
+    "@types/lodash": "^4.14.92",
+    "@webcomponents/webcomponentsjs": "^1.0.22",
+    "lodash-es": "^4.17.4"
   }
 }
