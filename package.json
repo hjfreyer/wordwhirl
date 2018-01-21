@@ -14,6 +14,8 @@
   },
   "homepage": "https://github.com/hjfreyer/wordwhirl#readme",
   "devDependencies": {
+    "awesome-typescript-loader": "^3.4.1",
+    "source-map-loader": "^0.2.3",
     "ts-loader": "^3.2.0",
     "typescript": "^2.6.2",
     "webpack": "^3.10.0",
@@ -22,7 +24,11 @@
   "dependencies": {
     "@polymer/polymer": "^3.0.0-pre.3",
     "@types/lodash": "^4.14.92",
+    "@types/react": "^16.0.34",
+    "@types/react-dom": "^16.0.3",
     "@webcomponents/webcomponentsjs": "^1.0.22",
-    "lodash-es": "^4.17.4"
+    "lodash-es": "^4.17.4",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0"
   }
 }
