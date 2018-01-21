@@ -1,0 +1,67 @@
+
+#root {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    display: flex;
+
+    flex-flow: column nowrap;
+    align-items: center;
+
+    font-family: Roboto;
+  }
+  * {
+
+    box-sizing:border-box;
+  }
+  card {
+    font-size: 40px;
+  }
+
+  button {
+    font-size: 40px;
+  }
+  #suggestions {
+    display: flex;
+    height: 70px;
+  }
+
+  #available {
+    display: flex;
+    height: 70px;
+  }
+
+  .tile {
+    width: 70px;
+    height: 70px;
+    text-transform: uppercase;
+  }
+
+  .slot {
+    border: 1px solid black;
+    width: 70px;
+    height: 70px;
+  }
+
+  .box {
+    position: absolute;
+    border: 1px solid grey;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #answers {
+    position: relative;
+
+    font-size: 20px;
+
+    border: 1px solid grey;
+
+    align-self: stretch;
+    flex: 1;
+  }

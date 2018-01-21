@@ -4,6 +4,7 @@
     "module": "commonjs",
     "target": "es6",
     "jsx": "react",
-    "allowJs": true
+    "allowJs": true,
+    "strictNullChecking": true,
   }
 }

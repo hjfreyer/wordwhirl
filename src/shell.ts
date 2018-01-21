@@ -1,6 +1,6 @@
 (function() {
   // @ts-ignore
-  const libLoaded = import(/* webpackChunkName: "app" */ './app.ts');
+  const libLoaded = import(/* webpackChunkName: "app" */ './index.tsx');
   const dataLoaded = import(/* webpackChunkName: "data" */ '../words/data/words.json');
 
   const buttonPressed = new Promise(resolve =>
@@ -12,8 +12,10 @@
     const loadingScreen = document.getElementById('loading-screen');
     loadingScreen.parentNode.removeChild(loadingScreen);
 
+    lib.main();
+
     // @ts-ignore
-    document.body.appendChild(new lib.MyApp(data));
+//    document.body.appendChild(new lib.MyApp(data));
   });
 
   document.getElementById('new-game').click();

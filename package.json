@@ -15,6 +15,10 @@
   "homepage": "https://github.com/hjfreyer/wordwhirl#readme",
   "devDependencies": {
     "awesome-typescript-loader": "^3.4.1",
+    "css-loader": "^0.28.9",
+    "extract-loader": "^1.0.2",
+    "extract-text-webpack-plugin": "^3.0.2",
+    "file-loader": "^1.1.6",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^3.2.0",
     "typescript": "^2.6.2",
