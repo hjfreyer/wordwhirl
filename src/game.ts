@@ -72,8 +72,8 @@ export class Controller {
 
     let gameStructure = _.sample(this._wordList.containment);
     let tiles = _.shuffle(
-      this._wordList.words[gameStructure.fullWord].split(''));
-    let answers = gameStructure.subwords.map(i => this._wordList.words[i]);
+      this._wordList.words[gameStructure!.fullWord].split(''));
+    let answers = gameStructure!.subwords.map(i => this._wordList.words[i]);
     answers = _.sortBy(answers, ['length', _.identity]);
 
     this._tiles = tiles.map((t, idx) => ({
@@ -226,10 +226,10 @@ export class Controller {
   shuffle() {
     this._checkState(GameState.STATE_ROUND);
 
-    let moves = [];
+    let moves : Move[] = [];
 
     let perm = _.shuffle(_.range(6));
-    let newAvailable = [];
+    let newAvailable : number[] = [];
     for (let i = 0; i < perm.length; i++) {
       newAvailable[perm[i]] = this._available[i];
       if (this._available[i] != -1) {
