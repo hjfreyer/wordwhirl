@@ -14,7 +14,7 @@ function getScalingFactorToFit(insideAspect : number, containerAspect : number) 
 function getLayout(answers : string[], numCols, rowGutterFraction, columnGutterFraction, containerWidthPx, containerHeightPx) {
   let numRows = Math.ceil(answers.length / numCols);
   let columns = _.chunk(answers, numRows);
-  let columnWidths = columns.map(c => _.last(c).length);
+  let columnWidths = columns.map(c => _.last(c)!.length);
 
   let width = _.sum(columnWidths) + columns.length * columnGutterFraction;
   let height = numRows * (1 + rowGutterFraction);
