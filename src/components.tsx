@@ -18,15 +18,18 @@ export interface InRoundState {
     available: string[]
     wrong: boolean
 
+        showNewRound: boolean
+            showNewGame: boolean
+
     answers: Answer[]
 }
 
 export interface Answer {
-    word: string
-    hidden: boolean
+    answer: string
+    revealed: boolean
 }
 
-export type UiButtonName = "backspace" | "shuffle" | "submit";
+export type UiButtonName = "backspace" | "shuffle" | "submit" | "new_round" | "new_game";
 
 export interface UiClickAction {
     kind: "ui_click"
@@ -43,7 +46,12 @@ export interface SetTimeAction {
     timeMillis: number
 }
 
-export type ViewAction = UiClickAction | TileClickAction | SetTimeAction
+export interface KeystrokeAction {
+    kind: "keystroke"
+    event: KeyboardEvent
+}
+
+export type ViewAction = UiClickAction | TileClickAction | SetTimeAction | KeystrokeAction
 type InertElement<Props> = (props: Props) => JSX.Element;
 
 type Element<Props, ActionType> =
@@ -55,30 +63,29 @@ export const Root: Element<{ state: ViewState }, any> = ({ state, fire }) => {
     }
 };
 
-function ActionButton(props): JSX.Element {
-    let p2 = Object.assign({}, props, {
-        children: null,
-        action: null,
-        fire: null,
-    })
-    let children = props.children;
-    let action = props.action;
-    let fire = props.fire;
-    return <button onClick={() => fire(action)} {...p2}>{children}</button>;
-}
-
 
 const InRound: Element<{ state: InRoundState }, ViewAction> = ({ state, fire }) => {
-    const uiFire = (elementName : UiButtonName) => fire({
+    const uiFire = (elementName: UiButtonName) => fire({
         kind: 'ui_click',
         button: elementName
     });
-    const tileFire = (isSuggestion : boolean, slot : number) => fire({
+    const tileFire = (isSuggestion: boolean, slot: number) => fire({
         kind: 'tile_click',
         position: { isSuggestion, slot },
     })
+
+    const newRoundButton = state.showNewRound ? (
+        <button onClick={() => uiFire("new_round")} >New Round</button>
+    ) : null;
+
+    const newGameButton = state.showNewGame ? (
+        <button onClick={() => uiFire("new_game")} >New Game</button>
+    ) : null;
+
     return (
         <div>
+            {newRoundButton}
+            {newGameButton}
             <ScoreBoard score={state.score} timeLeft={state.timeLeft} />
             <div id="suggestions">
                 {state.suggesting.map((letter, idx) =>
@@ -91,15 +98,15 @@ const InRound: Element<{ state: InRoundState }, ViewAction> = ({ state, fire }) 
                         onClick={() => tileFire(false, idx)}>{letter}</button>)}
             </div>
             <div className="card">
-                <button onClick={()=>uiFire("backspace")}>Back</button>
-                <button onClick={()=>uiFire("submit")}>Submit</button>
-                <button onClick={()=>uiFire("shuffle")}>Shuffle</button>
+                <button onClick={() => uiFire("backspace")}>Back</button>
+                <button onClick={() => uiFire("submit")}>Submit</button>
+                <button onClick={() => uiFire("shuffle")}>Shuffle</button>
                 <span hidden={!state.wrong}>Wrong</span>
             </div>
             <div id="answers">
                 {state.answers.map((answer, answerIdx) =>
                     (<div key={answerIdx}>
-                        {answer.hidden ? answer.word.length : answer.word}
+                        {answer.revealed ? answer.answer : answer.answer.length}
                     </div>))}
             </div>
         </div>);

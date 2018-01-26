@@ -13,34 +13,45 @@ export interface GameParams {
 export interface Game {
     params: GameParams
     time: number,
+    displayTime: number,
     score: number,
 
     round: Round,
-    gameOver: boolean,
 }
 
 export interface Round {
     startTime: number
-    roundOver: boolean
     gameIdx: number
 
     tiles: t.Position[]
-    revealed: boolean[]
+    answers: Answer[]
 }
 
-export function newGame(params: GameParams, time: number): StatusOr<Game> {
-    return Ok({
+export interface Answer {
+    answer: string
+    revealed: boolean
+}
+
+export function newGame(params: GameParams, time: number): Game {
+    return {
         params: Object.assign({}, params),
         time: time,
+        displayTime: time,
         score: 0,
 
         round: mkRound(params.wordList, time),
-        gameOver: false
-    });
+    };
 }
 
 export function setTime(g: Game, time: number): Game {
-    return iassign(g, g => g.time, () => time);
+    g = iassign(g, g => g.time, () => time);
+
+    if (getState(g) != State.IN_ROUND) {
+        g = iassign(g,
+            g => g.round.answers,
+            answers => answers.map(a => iassign(a, a => a.revealed, () => true)));
+    }
+    return g;
 }
 
 function mkRound(wordList: t.WordList, time: number): Round {
@@ -51,36 +62,57 @@ function mkRound(wordList: t.WordList, time: number): Round {
     let tiles: t.Position[] = _.shuffle(
         _.range(6).map(idx => ({ slot: idx, isSuggestion: false })));
 
+    let answers = c.subwords.map(s => ({
+        answer: wordList.words[s],
+        revealed: false,
+    }));
+
+    answers = _.sortBy(answers, ['answer.length', 'answer']);
+
     return {
         startTime: time,
         gameIdx: gameIdx,
-        roundOver: false,
 
         tiles: tiles,
-        revealed: c.subwords.map(() => false),
+        answers: answers,
     };
 }
 
 export function newRound(g: Game): StatusOr<Game> {
-    if (g.gameOver) {
-        return Error("game is over");
-    }
-    if (!g.round.roundOver) {
+    if (getState(g) != State.BETWEEN_ROUNDS) {
         return Error("round isn't over");
     }
     return Ok(iassign(g, g => g.round, r => mkRound(g.params.wordList, g.time)));
 }
 
-export function getTimeLeft(g: Game): StatusOr<number> {
-    if (g.round.roundOver) {
-        return Error("round is over");
+export function getTimeLeft(g: Game): number {
+    if (getState(g) != State.IN_ROUND) {
+        return 0;
     }
     let elapsed = g.time - g.round.startTime;
-    return Ok(g.params.roundLengthMillis - elapsed);
+    return g.params.roundLengthMillis - elapsed;
+}
+
+export enum State {
+    IN_ROUND,
+    BETWEEN_ROUNDS,
+    GAME_OVER,
+}
+
+export function getState(g: Game): State {
+    if (g.time < g.round.startTime + g.params.roundLengthMillis) {
+        return State.IN_ROUND;
+    }
+    if (_.some(g.round.answers, a => a.answer.length == 6 && a.revealed)) {
+        return State.BETWEEN_ROUNDS;
+    }
+    return State.GAME_OVER;
 }
 
 export function selectTile(g: Game, index: number): Game {
-    console.log('select: ', index)
+    if (getState(g) != State.IN_ROUND) {
+        return g;
+    }
     let tile = g.round.tiles[index];
     if (tile.isSuggestion) {
         return g;
@@ -92,6 +124,10 @@ export function selectTile(g: Game, index: number): Game {
 }
 
 export function backspace(g: Game): Game {
+    if (getState(g) != State.IN_ROUND) {
+        return g;
+    }
+
     let s = getSuggestions(g);
     if (s.length == 0) {
         return g;
@@ -101,20 +137,69 @@ export function backspace(g: Game): Game {
     let dest = nthEmpty(g, g.round.tiles[lastTileIdx].slot);
 
     return iassign(g,
-    g=>g.round.tiles[lastTileIdx],
-  ()=>({isSuggestion: false, slot: dest}))
+        g => g.round.tiles[lastTileIdx],
+        () => ({ isSuggestion: false, slot: dest }))
+}
+
+export function submit(g: Game): Game {
+    if (getState(g) != State.IN_ROUND) {
+        return g;
+    }
+    let word = getSuggestions(g).map(idx => getLetter(g, idx)).join('');
+
+    let answerIdx = _.findIndex(g.round.answers, a => word == a.answer);
+    if (answerIdx == -1) {
+        return g;
+    }
+
+    if (!g.round.answers[answerIdx].revealed) {
+        g = iassign(g,
+            g => g.score,
+            score => score + word.length * word.length);
+
+        g = iassign(g,
+            g => g.round.answers[answerIdx].revealed,
+            () => true);
+    }
+    while (_.some(g.round.tiles, 'isSuggestion')) {
+        g = backspace(g);
+    }
+    return g;
+}
+
+export function shuffle(g: Game): Game {
+    if (getState(g) != State.IN_ROUND) {
+        return g;
+    }
+    let perm = _.shuffle(_.range(6));
+
+    let newTiles = perm.map((j, i) => {
+        if (g.round.tiles[i].isSuggestion) {
+            return g.round.tiles[i];
+        } else {
+            return iassign(g.round.tiles[i], t => t.slot, () => j);
+        }
+    });
+    return iassign(g,
+        g => g.round.tiles,
+        () => newTiles);
 }
 
 export function getLettersAndPositions(g: Game): { letter: string, position: t.Position }[] {
-  let contain = g.params.wordList.containment[g.round.gameIdx];
-  let letters = g.params.wordList.words[contain.fullWord].split('');
+    let contain = g.params.wordList.containment[g.round.gameIdx];
+    let letters = g.params.wordList.words[contain.fullWord].split('');
 
-  if (letters.length != g.round.tiles.length) {
-    throw 'wtf';
-  }
+    if (letters.length != g.round.tiles.length) {
+        throw 'wtf';
+    }
 
-  return _.range(letters.length)
-    .map(i => ({letter: letters[i], position: g.round.tiles[i]}))
+    return _.range(letters.length)
+        .map(i => ({ letter: letters[i], position: g.round.tiles[i] }))
+}
+
+function getLetter(g: Game, index: number): string {
+    let contain = g.params.wordList.containment[g.round.gameIdx];
+    return g.params.wordList.words[contain.fullWord][index];
 }
 
 function getSuggestions(g: Game): number[] {
