@@ -1,272 +1,236 @@
-import * as _ from 'lodash';
+
+import iassign from 'immutable-assign';
+import * as _ from 'lodash'
+
 import * as t from './types';
+import { StatusOr, Ok, Error } from './util';
 
-const ROUND_LENGTH_SEC = 180;
-
-enum GameState {
-  STATE_WAITING_FOR_NEXT_GAME = 'WAITING_FOR_NEXT_GAME',
-  STATE_WAITING_FOR_NEXT_ROUND = 'WAITING_FOR_NEXT_ROUND',
-  STATE_ROUND = 'ROUND',
+export interface GameParams {
+    wordList: t.WordList
+    roundLengthMillis: number
 }
 
-export interface NewRoundResponse {
-  tiles: string[]
-  answers: string[]
-  endTime: number
+export interface Game {
+    params: GameParams
+    time: number,
+    displayTime: number,
+    score: number,
+
+    round: Round,
 }
 
-export interface Move {
-  tileIdx: number
-  position: t.Position
+export interface Round {
+    startTime: number
+    gameIdx: number
+
+    tiles: t.Position[]
+    answers: Answer[]
 }
 
-export interface SelectTileResponse {
-  moves: Move[]
-};
-
-export interface HeartbeatResponse {
-  roundEnd?: {reveal: number[]}
-}
-
-export interface SubmitResponse {
-  duplicate?: { answerIdx: number }
-  accept?: { answerIdx: number }
-  reject?: {}
-  score: number
-  moves: Move[]
-}
-
-export class Controller {
-  _wordList: t.WordList
-  _state : GameState
-  _score: number
-  _tiles: {
-    letter: string,
-    slotIdx: number,
-    isSuggestion: boolean,
-  }[]
-  _answers: {
+export interface Answer {
     answer: string
-    guessed: boolean
-  }[]
+    revealed: boolean
+}
 
-  _available: number[]
-  _suggestions: number[]
-  _endTime: number
+export function newGame(params: GameParams, time: number): Game {
+    return {
+        params: Object.assign({}, params),
+        time: time,
+        displayTime: time,
+        score: 0,
 
-  constructor(wordList : t.WordList) {
-    this._wordList = wordList;
+        round: mkRound(params.wordList, time),
+    };
+}
 
-    this._state = GameState.STATE_WAITING_FOR_NEXT_GAME;
-  }
+export function setTime(g: Game, time: number): Game {
+    g = iassign(g, g => g.time, () => time);
 
-  newGame() : void {
-    this._checkState(GameState.STATE_WAITING_FOR_NEXT_GAME) ;
+    if (getState(g) != State.IN_ROUND) {
+        g = iassign(g,
+            g => g.round.answers,
+            answers => answers.map(a => iassign(a, a => a.revealed, () => true)));
+    }
+    return g;
+}
 
-    this._state = GameState.STATE_WAITING_FOR_NEXT_ROUND;
-    this._score = 0;
-  }
+function mkRound(wordList: t.WordList, time: number): Round {
+    let gameIdx = Math.floor(Math.random() * wordList.containment.length);
 
-  newRound() : NewRoundResponse {
-    this._checkState(GameState.STATE_WAITING_FOR_NEXT_ROUND) ;
+    let c = wordList.containment[gameIdx];
 
-    let gameStructure = _.sample(this._wordList.containment);
-    let tiles = _.shuffle(
-      this._wordList.words[gameStructure!.fullWord].split(''));
-    let answers = gameStructure!.subwords.map(i => this._wordList.words[i]);
-    answers = _.sortBy(answers, ['length', _.identity]);
+    let tiles: t.Position[] = _.shuffle(
+        _.range(6).map(idx => ({ slot: idx, isSuggestion: false })));
 
-    this._tiles = tiles.map((t, idx) => ({
-      letter: t,
-      slotIdx: idx,
-      isSuggestion: false,
+    let answers = c.subwords.map(s => ({
+        answer: wordList.words[s],
+        revealed: false,
     }));
-    this._answers = answers.map(a => ({
-      answer: a,
-      guessed: false,
-    }));
-    this._available = [...tiles.keys()]; // Range
-    this._suggestions = [];
-    this._endTime = Date.now() + ROUND_LENGTH_SEC * 1000;
 
-    this._state = GameState.STATE_ROUND;
+    answers = _.sortBy(answers, ['answer.length', 'answer']);
 
     return {
-      tiles: tiles,
-      answers: answers,
-      endTime: this._endTime,
+        startTime: time,
+        gameIdx: gameIdx,
+
+        tiles: tiles,
+        answers: answers,
     };
-  }
+}
 
-  selectTile(tileIdx : number) : SelectTileResponse {
-    this._checkState(GameState.STATE_ROUND);
+export function newRound(g: Game): StatusOr<Game> {
+    if (getState(g) != State.BETWEEN_ROUNDS) {
+        return Error("round isn't over");
+    }
+    return Ok(iassign(g, g => g.round, r => mkRound(g.params.wordList, g.time)));
+}
 
-    let tile = this._tiles[tileIdx];
+export function getTimeLeft(g: Game): number {
+    if (getState(g) != State.IN_ROUND) {
+        return 0;
+    }
+    let elapsed = g.time - g.round.startTime;
+    return g.params.roundLengthMillis - elapsed;
+}
+
+export enum State {
+    IN_ROUND,
+    BETWEEN_ROUNDS,
+    GAME_OVER,
+}
+
+export function getState(g: Game): State {
+    if (g.time < g.round.startTime + g.params.roundLengthMillis) {
+        return State.IN_ROUND;
+    }
+    if (_.some(g.round.answers, a => a.answer.length == 6 && a.revealed)) {
+        return State.BETWEEN_ROUNDS;
+    }
+    return State.GAME_OVER;
+}
+
+export function selectTile(g: Game, index: number): Game {
+    if (getState(g) != State.IN_ROUND) {
+        return g;
+    }
+    let tile = g.round.tiles[index];
     if (tile.isSuggestion) {
-      if (tile.slotIdx != this._suggestions.length - 1) {
-        return {
-          moves: []
-        };
-      }
-      return this.backspace();
-    } else {
-      this._suggestions.push(tileIdx);
-      this._available[tile.slotIdx] = -1;
-      tile.slotIdx = this._suggestions.length - 1;
-      tile.isSuggestion = true;
-      return {
-        moves: [{
-          tileIdx: tileIdx,
-          position: {
-            slot: tile.slotIdx,
-            isSuggestion: tile.isSuggestion,
-          }
-        }]
-      };
+        return g;
     }
-  }
+    let s = getSuggestions(g);
+    return iassign(g,
+        g => g.round.tiles[index],
+        () => ({ isSuggestion: true, slot: s.length }));
+}
 
-  heartbeat() : HeartbeatResponse {
-    if (this._state != GameState.STATE_ROUND) {
-      return {};
-    }
-    if (this._endTime < Date.now()) {
-      this._state = GameState.STATE_WAITING_FOR_NEXT_ROUND;
-      let toReveal = _.filter([...this._answers.keys()],
-        (idx :number)  => !this._answers[idx].guessed);
-
-      return {
-        roundEnd: {
-          reveal: toReveal,
-        },
-      };
-    }
-    return {};
-  }
-
-  backspace() : {moves: Move[]} {
-    this._checkState(GameState.STATE_ROUND);
-    if (this._suggestions.length == 0) {
-      return {
-        moves: []
-      };
+export function backspace(g: Game): Game {
+    if (getState(g) != State.IN_ROUND) {
+        return g;
     }
 
-    return {
-      moves: [this._doBackspace()]
-    };
-  }
+    let s = getSuggestions(g);
+    if (s.length == 0) {
+        return g;
+    }
+    let lastTileIdx = _.last(s)!;
 
-  _doBackspace() : Move {
-    let tileIdx = this._suggestions[this._suggestions.length - 1];
-    let tile = this._tiles[tileIdx];
+    let dest = nthEmpty(g, g.round.tiles[lastTileIdx].slot);
 
-    let dest = this._nthEmpty(tile.slotIdx);
-    this._available[dest] = tileIdx;
-    this._suggestions.pop();
-    tile.slotIdx = dest;
-    tile.isSuggestion = false;
-    return {
-      tileIdx: tileIdx,
-      position: {
-        slot: tile.slotIdx,
-        isSuggestion: tile.isSuggestion,
-      }
-    };
-  }
+    return iassign(g,
+        g => g.round.tiles[lastTileIdx],
+        () => ({ isSuggestion: false, slot: dest }))
+}
 
-  _nthEmpty(n : number) : number {
+export function submit(g: Game): Game {
+    if (getState(g) != State.IN_ROUND) {
+        return g;
+    }
+    let word = getSuggestions(g).map(idx => getLetter(g, idx)).join('');
+
+    let answerIdx = _.findIndex(g.round.answers, a => word == a.answer);
+    if (answerIdx == -1) {
+        return g;
+    }
+
+    if (!g.round.answers[answerIdx].revealed) {
+        g = iassign(g,
+            g => g.score,
+            score => score + word.length * word.length);
+
+        g = iassign(g,
+            g => g.round.answers[answerIdx].revealed,
+            () => true);
+    }
+    while (_.some(g.round.tiles, 'isSuggestion')) {
+        g = backspace(g);
+    }
+    return g;
+}
+
+export function shuffle(g: Game): Game {
+    if (getState(g) != State.IN_ROUND) {
+        return g;
+    }
+    let perm = _.shuffle(_.range(6));
+
+    let newTiles = perm.map((j, i) => {
+        if (g.round.tiles[i].isSuggestion) {
+            return g.round.tiles[i];
+        } else {
+            return iassign(g.round.tiles[i], t => t.slot, () => j);
+        }
+    });
+    return iassign(g,
+        g => g.round.tiles,
+        () => newTiles);
+}
+
+export function getLettersAndPositions(g: Game): { letter: string, position: t.Position }[] {
+    let contain = g.params.wordList.containment[g.round.gameIdx];
+    let letters = g.params.wordList.words[contain.fullWord].split('');
+
+    if (letters.length != g.round.tiles.length) {
+        throw 'wtf';
+    }
+
+    return _.range(letters.length)
+        .map(i => ({ letter: letters[i], position: g.round.tiles[i] }))
+}
+
+function getLetter(g: Game, index: number): string {
+    let contain = g.params.wordList.containment[g.round.gameIdx];
+    return g.params.wordList.words[contain.fullWord][index];
+}
+
+function getSuggestions(g: Game): number[] {
+    let res: number[] = [];
+
+    for (let i = 0; i < g.round.tiles.length; i++) {
+        if (g.round.tiles[i].isSuggestion) {
+            res[g.round.tiles[i].slot] = i;
+        }
+    }
+
+    return res;
+}
+
+function getAvailable(g: Game): number[] {
+    let res: number[] = new Array(6).fill(-1);
+
+    for (let i = 0; i < g.round.tiles.length; i++) {
+        if (!g.round.tiles[i].isSuggestion) {
+            res[g.round.tiles[i].slot] = i;
+        }
+    }
+
+    return res;
+}
+
+function nthEmpty(g: Game, n: number): number {
+    let a = getAvailable(g);
     let res = -1;
     for (let i = 0; i < n + 1; i++) {
-      res = _.findIndex(this._available, (s : number) => s == -1, res + 1);
+        res = _.findIndex(a, (s: number) => s == -1, res + 1);
     }
     return res;
-  }
-
-  submit() : SubmitResponse {
-    this._checkState(GameState.STATE_ROUND);
-
-    let guess = this._suggestions.map(tileIdx => this._tiles[tileIdx].letter).join('');
-    let answerIdx = _.findIndex(this._answers, {
-      // @ts-ignore
-      'answer': guess
-    });
-    if (answerIdx != -1) {
-      if (this._answers[answerIdx].guessed) {
-        return {
-          duplicate: {
-            answerIdx: answerIdx
-          },
-          score: this._score,
-          moves: _.times(guess.length, this._doBackspace.bind(this)),
-        }
-      } else {
-        this._answers[answerIdx].guessed = true;
-        this._score += guess.length * guess.length;
-        return {
-          accept: {
-            answerIdx: answerIdx,
-          },
-          score: this._score,
-          moves: _.times(guess.length, this._doBackspace.bind(this)),
-        };
-      }
-    } else {
-      return {
-        reject: {},
-        score: this._score,
-        moves: [],
-      };
-    }
-  }
-
-
-  // TODO: This could be a bit prettier by only swapping filled slots, not
-  // moving things to entirely new slots.
-  shuffle() {
-    this._checkState(GameState.STATE_ROUND);
-
-    let moves : Move[] = [];
-
-    let perm = _.shuffle(_.range(6));
-    let newAvailable : number[] = [];
-    for (let i = 0; i < perm.length; i++) {
-      newAvailable[perm[i]] = this._available[i];
-      if (this._available[i] != -1) {
-        this._tiles[this._available[i]].slotIdx = perm[i];
-        moves.push({
-          tileIdx: this._available[i],
-          position: {
-            slot: perm[i],
-            isSuggestion: false,
-          }
-        });
-      }
-    }
-
-    this._available = newAvailable;
-    return {
-      moves: moves
-    };
-  }
-
-  typeCharacter(char : string) : SelectTileResponse {
-    this._checkState(GameState.STATE_ROUND);
-
-    // TODO: Select the leftmost matching letter.
-    let index = _.findIndex(this._tiles, t => t.letter == char && !t.isSuggestion);
-    if (index == -1) {
-      return {
-        moves: []
-      };
-    }
-
-    return this.selectTile(index);
-  }
-
-  _checkState(expectedState : GameState) {
-    if (this._state != expectedState) {
-      throw 'Invalid game state';
-    }
-  }
 }

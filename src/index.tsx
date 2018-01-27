@@ -3,7 +3,7 @@ import * as ReactDOM from "react-dom";
 
 import * as c from "./components"
 import * as t from "./types"
-import * as game from './game2';
+import * as game from './game';
 import * as Rx from 'rxjs'
 import * as _ from 'lodash';
 import { StatusOr, Ok, Error, GetOrThrow } from './util';
