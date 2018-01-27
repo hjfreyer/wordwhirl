@@ -7,7 +7,7 @@ import * as game from './game';
 import * as Rx from 'rxjs'
 import * as _ from 'lodash';
 import { StatusOr, Ok, Error, GetOrThrow } from './util';
-import '../assets/style.css';
+import '../assets/style.scss';
 
 
 const ROUND_LENGTH_SEC = 120;

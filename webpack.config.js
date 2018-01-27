@@ -42,9 +42,9 @@ module.exports = {
         loader: "source-map-loader"
       },
       {
-        test: /\.css$/,
+        test: /\.scss$/,
         loader: ExtractTextPlugin.extract({
-          use: "css-loader"
+          use: ["css-loader", 'sass-loader']
         })
       }
     ]

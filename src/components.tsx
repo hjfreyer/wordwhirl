@@ -124,6 +124,6 @@ const ScoreBoard: InertElement<{ score: number, timeLeft: number }> = ({ score, 
     return (<div id="scoreboard">
         <span className="score">{score}</span>
         <span className="logo">Word Whirl</span>
-        <span className="time {timeLowClass}">{util.formatMillis(timeLeft)}</span>
+        <span className={"time " +timeLowClass}>{util.formatMillis(timeLeft)}</span>
     </div>);
 };

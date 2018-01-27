@@ -22,33 +22,49 @@ html, body {
 #scoreboard {
   display: flex;
   justify-content: space-between;
+
+  padding: 5px 0;
+
+  .score, .time {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+
+    font-size: 20px;
+
+    &:after {
+      font-size: 10px;
+    }
+  }
+
+  .logo {
+    font-size: 30px;
+  }
+
+  .score:after {
+    content: 'Score';
+  }
+
+  .time:after {
+    content: 'Time';
+    color: black;
+  }
+
+  .time.low {
+    color: red;
+  }
 }
 
-.score, .time {
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: center;
-}
 
-.score:after {
-  content: 'Score';
-}
-
-.time:after {
-  content: 'Time';
-}
 
   button {
     font-size: 40px;
   }
-  #suggestions {
+  #suggestions,   #available {
     display: flex;
     height: 70px;
-  }
-
-  #available {
-    display: flex;
-    height: 70px;
+    margin: auto;
+    justify-content: center;
   }
 
   .tile {
