@@ -120,8 +120,10 @@ const InRound: Element<{ state: InRoundState }, ViewAction> = ({ state, fire }) 
 };
 
 const ScoreBoard: InertElement<{ score: number, timeLeft: number }> = ({ score, timeLeft }) => {
-    return (<div className="card" id="scoreboard">
-        <label>Score: </label><span>{score}</span>
-        <label>Time left: </label><span>{util.formatMillis(timeLeft)}</span>
+  let timeLowClass = timeLeft < 10000 ? 'low' : '';
+    return (<div id="scoreboard">
+        <span className="score">{score}</span>
+        <span className="logo">Word Whirl</span>
+        <span className="time {timeLowClass}">{util.formatMillis(timeLeft)}</span>
     </div>);
 };
