@@ -79,7 +79,7 @@ const InRound: Element<{ state: InRoundState }, ViewAction> = ({ state, fire }) 
     ) : null;
 
     return (
-        <div>
+        <div id="container">
             {newRoundButton}
             {newGameButton}
             <ScoreBoard score={state.score} timeLeft={state.timeLeft} />
