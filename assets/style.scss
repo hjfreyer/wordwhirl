@@ -99,4 +99,8 @@ html, body {
 
     align-self: stretch;
     flex: 1;
+
+    .revealed {
+      color: red;
+    }
   }

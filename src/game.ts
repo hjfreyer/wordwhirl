@@ -115,9 +115,8 @@ export function getAnswers(g: Game): Answer[] {
     let gs = getState(g);
     return g._round.answers.map(a => ({
         answer: a.answer,
-        state: gs == State.IN_ROUND ? (a.revealed
-            ? AnswerState.Solved
-            : AnswerState.Hidden) : AnswerState.Revealed,
+        state: a.revealed ? AnswerState.Solved : (gs == State.IN_ROUND ?
+            AnswerState.Hidden : AnswerState.Revealed),
     }));
 }
 

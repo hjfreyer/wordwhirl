@@ -101,7 +101,8 @@ const InRound: Element<{ state: InRoundState }, ViewAction> = ({ state, fire }) 
             </div>
             <div id="answers">
                 {state.answers.map((answer, answerIdx) =>
-                    (<div key={answerIdx}>
+                    (<div key={answerIdx}
+                        className={answer.state == game.AnswerState.Revealed ? 'revealed' : ''}>
                         {answer.state == game.AnswerState.Hidden ? answer.answer.length : answer.answer}
                     </div>))}
             </div>
