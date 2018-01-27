@@ -4,6 +4,7 @@ import * as ReactDOM from "react-dom";
 
 import * as util from "./util"
 import * as t from "./types"
+import * as game from './game';
 
 export type ViewState = InRoundState;
 
@@ -18,15 +19,10 @@ export interface InRoundState {
     available: string[]
     wrong: boolean
 
-        showNewRound: boolean
-            showNewGame: boolean
+    showNewRound: boolean
+    showNewGame: boolean
 
-    answers: Answer[]
-}
-
-export interface Answer {
-    answer: string
-    revealed: boolean
+    answers: game.Answer[]
 }
 
 export type UiButtonName = "backspace" | "shuffle" | "submit" | "new_round" | "new_game";
@@ -106,7 +102,7 @@ const InRound: Element<{ state: InRoundState }, ViewAction> = ({ state, fire }) 
             <div id="answers">
                 {state.answers.map((answer, answerIdx) =>
                     (<div key={answerIdx}>
-                        {answer.revealed ? answer.answer : answer.answer.length}
+                        {answer.state == game.AnswerState.Hidden ? answer.answer.length : answer.answer}
                     </div>))}
             </div>
         </div>);

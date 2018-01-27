@@ -26,13 +26,13 @@ function evolve(g: game.Game, n: c.ViewAction): game.Game {
                     case "new_round":
                         return GetOrThrow(game.newRound(g));
                     case "new_game":
-                        return game.newGame(g.params, g.time);
+                        return game.newGame(g.params, g._time);
                 }
             })();
         }
 
         case "tile_click":
-            let index = _.findIndex(g.round.tiles, t => _.isEqual(t, n.position));
+            let index = game.getTileAtPosition(g, n.position);
             if (index == -1) {
                 return g;
             }
@@ -98,7 +98,7 @@ function buildView(g: game.Game): c.ViewState {
         available: available,
         wrong: false,
 
-        answers: g.round.answers,
+        answers: game.getAnswers(g),
     };
 }
 
