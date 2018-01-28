@@ -80,9 +80,10 @@ const InRound: Element<{ state: InRoundState }, ViewAction> = ({ state, fire }) 
 
     return (
         <div id="container">
+            <ScoreBoard score={state.score} timeLeft={state.timeLeft} />
+            <main>
             {newRoundButton}
             {newGameButton}
-            <ScoreBoard score={state.score} timeLeft={state.timeLeft} />
             <div id="suggestions">
                 {state.suggesting.map((letter, idx) =>
                     <button className="tile" key={idx}
@@ -106,6 +107,7 @@ const InRound: Element<{ state: InRoundState }, ViewAction> = ({ state, fire }) 
                         {answer.state == game.AnswerState.Hidden ? answer.answer.length : answer.answer}
                     </div>))}
             </div>
+            </main>
         </div>);
     //<!--s-->
 
@@ -122,9 +124,9 @@ const InRound: Element<{ state: InRoundState }, ViewAction> = ({ state, fire }) 
 
 const ScoreBoard: InertElement<{ score: number, timeLeft: number }> = ({ score, timeLeft }) => {
   let timeLowClass = timeLeft < 10000 ? 'low' : '';
-    return (<div id="scoreboard">
+    return (<header id="scoreboard">
         <span className="score">{score}</span>
         <span className="logo">Word Whirl</span>
         <span className={"time " +timeLowClass}>{util.formatMillis(timeLeft)}</span>
-    </div>);
+    </header>);
 };

@@ -1,4 +1,6 @@
 
+$textColor: white;
+
 html, body {
   height: 100%;
   margin: 0;
@@ -12,7 +14,7 @@ html, body {
 #root {
   height: 100%;
   display: flex;
-  background: #e2e1e0;
+  background: #FF9E00;
 
   flex-flow: column nowrap;
   align-items: center;
@@ -27,8 +29,6 @@ html, body {
   overflow-y: auto;
 
   background: white;
-  padding: 1rem 2rem;
-
 
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
   border-radius: 2px;
@@ -54,43 +54,51 @@ html, body {
   }
 }
 
+.ilb {
+  display: inline-block;
+}
 #scoreboard {
   display: flex;
   justify-content: space-between;
+  align-items: center;
 
-  padding: 5px 0;
+  height: 4rem;
+
+  background: #157BFF;
+  box-shadow: 0 2px 5px rgba(0,0,0,.26);
+  padding: 0 1rem;
+
+  color: $textColor;
 
   .score, .time {
     display: flex;
     flex-flow: column nowrap;
     align-items: center;
 
-    font-size: 20px;
+    font-size: 1.5rem;
 
-    &:after {
+    &:before {
       font-size: 10px;
     }
   }
 
   .logo {
-    font-size: 30px;
+    font-size: 2rem;
   }
 
-  .score:after {
+  .score:before {
     content: 'Score';
   }
 
-  .time:after {
+  .time:before {
     content: 'Time';
-    color: black;
+    color: $textColor;
   }
 
   .time.low {
     color: red;
   }
 }
-
-
 
   button {
     font-size: 40px;
