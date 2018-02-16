@@ -8,7 +8,7 @@ import * as game from './game';
 
 export type ViewState = InRoundState;
 
-type Handler = (any) => void
+type Handler = (a: any) => void
 
 export interface InRoundState {
     kind: "in_round"

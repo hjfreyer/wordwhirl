@@ -3,6 +3,11 @@
 //import * as _ from '../node_modules/lodash-es/lodash.js'
 import * as _ from 'lodash';
 
+interface Point {
+	x: number
+	y: number
+}
+
 function getScalingFactorToFit(insideAspect : number, containerAspect : number) : number {
   if (insideAspect < containerAspect) {
     return 1;
@@ -11,7 +16,9 @@ function getScalingFactorToFit(insideAspect : number, containerAspect : number) 
   }
 }
 
-function getLayout(answers : string[], numCols, rowGutterFraction, columnGutterFraction, containerWidthPx, containerHeightPx) {
+function getLayout(answers : string[], numCols: number, 
+	rowGutterFraction: number, columnGutterFraction: number, 
+	containerWidthPx: number, containerHeightPx: number) {
   let numRows = Math.ceil(answers.length / numCols);
   let columns = _.chunk(answers, numRows);
   let columnWidths = columns.map(c => _.last(c)!.length);
@@ -45,11 +52,11 @@ export function getOptimalLayout(answers : string[],
 export class LayoutHelper {
   _l : any
 
-  constructor(layoutSpec) {
+  constructor(layoutSpec: any) {
     this._l = layoutSpec;
   }
 
-  getWordCoordinates(wordIdx) {
+  getWordCoordinates(wordIdx: number): Point {
     let rowIdx = wordIdx % this._l.numRows;
     let columnIdx = Math.floor(wordIdx / this._l.numRows);
 
@@ -60,7 +67,7 @@ export class LayoutHelper {
     };
   }
 
-  getLetterCoordinates(wordIdx, letterIdx) {
+  getLetterCoordinates(wordIdx: number, letterIdx: number): Point {
     let word = this.getWordCoordinates(wordIdx);
     return {
       x: word.x + this._l.tileSizePx * letterIdx,
