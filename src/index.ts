@@ -9,6 +9,8 @@ import * as _ from 'lodash';
 import { StatusOr, Ok, Error, GetOrThrow } from './util';
 import '../assets/style.scss';
 
+import data from '../words/data/words.json';
+
 
 const ROUND_LENGTH_SEC = 120;
 
@@ -103,7 +105,9 @@ function buildView(g: game.Game): c.ViewState {
 }
 
 
-export function main(wordList: t.WordList) {
+export function main() {
+	const wordList : t.WordList = data;
+	
     let initGame: game.Game =
         game.newGame({ wordList: wordList, roundLengthMillis: ROUND_LENGTH_SEC * 1000 }, Date.now());
 

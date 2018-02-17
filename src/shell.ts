@@ -1,22 +1,46 @@
-(function() {
-  // @ts-ignore
-  const libLoaded = import(/* webpackChunkName: "app" */ './index.tsx');
-  const dataLoaded = import(/* webpackChunkName: "data" */ '../words/data/words.json');
 
-  const buttonPressed = new Promise(resolve =>
-    document.getElementById('new-game')!.addEventListener('click', resolve)
-  );
+import '../assets/style.scss';
 
-  Promise.all([libLoaded, dataLoaded, buttonPressed]).then(([lib, data, button]) => {
-    console.log('loaded');
-    const loadingScreen = document.getElementById('loading-screen')!;
-    loadingScreen.parentNode!.removeChild(loadingScreen);
+export interface LibraryLoaded {
+	kind: "lib"
+	value: any
+}
 
-    lib.main(data);
+interface ButtonPressed {
+	kind: "button"
+}
 
-    // @ts-ignore
-//    document.body.appendChild(new lib.MyApp(data));
-  });
+const libLoaded : Promise<LibraryLoaded> = import(/* webpackChunkName: "app" */ './index').then(l=> ({
+	kind: "lib",
+	value: l,
+} as LibraryLoaded));
 
-  document.getElementById('new-game')!.click();
+const button = document.getElementById('new-game')!;
+
+const buttonPromise : Promise<any> = (()=> {
+	// @ts-ignore
+	return window['buttonPromise'];
 })();
+
+
+const buttonPressed : Promise<ButtonPressed> = 
+	buttonPromise.then(() => ({kind: "button"} as ButtonPressed));
+	
+function callMain(lib: any) {
+	const root = document.getElementById('root')!;
+	while (root.hasChildNodes()) {
+	    root.removeChild(root.lastChild!);
+	}
+	lib.main();
+}
+	
+Promise.race([buttonPressed, libLoaded]).then(value => {
+	switch (value.kind) {
+		case "button":
+			button.innerHTML = 'Loading...';
+			libLoaded.then(l => callMain(l.value));
+			break;
+		case "lib":
+			buttonPressed.then(() => callMain(value.value));
+	}
+});

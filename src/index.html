@@ -18,10 +18,14 @@
   <body>
     <style>
     </style>
-    <div id="loading-screen">
-      <button id="new-game">New Game</button>
-    </div>
+    <script>
+    	window.buttonPromise = new Promise(function(resolve) {
+	    	window.startGame = resolve;
+    	});
+    </script>
     <!--my-app></my-app-->
-    <div id="root"></div>
+    <div id="root">
+      <button id="new-game" onclick="/*globals startGame */ startGame()">New Game</button>
+    </div>
   </body>
 </html>

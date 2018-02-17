@@ -2,16 +2,9 @@ const path = require('path');
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-/*
-var mainCss = ["css-loader", path.join(__dirname, "assets", "style.css")];
-mainCss.unshift(
-        "file-loader?name=[name].[ext]",
-        path.resolve(__dirname, "..", "..", "lib", "extractLoader.js") // should be just "extract" in your case
-    );*/
 module.exports = {
   entry: {
-    shell: './src/shell.ts',
-  //css:  mainCss.join("!")
+    shell: './src/shell.ts'
   },
   output: {
     filename: '[name].bundle.js',
@@ -54,7 +47,8 @@ module.exports = {
     new HtmlWebpackPlugin(
       {
         template: './src/index.html',
-        publicPath: '/wordwhirl/'
+        publicPath: '/wordwhirl/',
+        chunks: ['shell'],
       }
     ),
   ],
