@@ -7,10 +7,11 @@ import * as game from './game';
 import * as Rx from 'rxjs'
 import * as _ from 'lodash';
 import { StatusOr, Ok, Error, GetOrThrow } from './util';
-import '../assets/style.scss';
 
 import data from '../words/data/words.json';
-
+import * as state from './state';
+import * as view from './view';
+import iassign from 'immutable-assign';
 
 const ROUND_LENGTH_SEC = 120;
 
@@ -102,6 +103,52 @@ function buildView(g: game.Game): c.ViewState {
 
         answers: game.getAnswers(g),
     };
+}
+
+interface ToplevelState {
+	s: state.State
+	db: view.DomBag | null
+}
+
+class Index {
+	_root : Element;
+	_wordList : t.WordList;
+	_fire: t.Handler<state.Action>;
+	
+	constructor(root: Element, wordList: t.WordList, fire: (a:state.Action) => void) {
+		this._root = root;
+		this._wordList = wordList;
+		this._fire = fire;
+	}
+	
+	initialState(): ToplevelState {
+/*	 const initGame: game.Game =
+        game.newGame({ wordList: this._wordList, roundLengthMillis: ROUND_LENGTH_SEC * 1000 }, Date.now());
+*/
+		return {
+			s: {time: 0},
+			db: null, 
+		};
+	}
+	
+	scanFn(s: ToplevelState, a: state.Action): Rx.Observable<ToplevelState> {
+		console.log('scanning: ', s.s.time, a);
+		let domInfo : state.DomInfo | null = null;
+		if (s.db) {
+			domInfo = view.extractDomInfo(s.db);
+		}
+		const newState : state.State = state.applyAction(s.s, domInfo!, a);
+		
+		const v = state.getView(newState);
+		
+		const [dom, bag] = view.getDom(v, this._fire)
+		
+		ReactDOM.render(dom, this._root, ()=>console.log("rendered"))
+		s = iassign(s, s=>s.s.time, t=>t+1);
+		return Rx.Observable.fromPromise(bag.then(b=> iassign(s, s=>s.db, ()=>b)));
+	}
+	
+//	viewScanFn(s:)
 }
 
 

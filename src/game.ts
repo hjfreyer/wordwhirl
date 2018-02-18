@@ -4,6 +4,8 @@ import * as _ from 'lodash'
 
 import * as t from './types';
 import { StatusOr, Ok, Error } from './util';
+import * as rs from 'random-seed';
+
 
 export interface GameParams {
     wordList: t.WordList
@@ -50,6 +52,10 @@ export function newGame(params: GameParams, time: number): Game {
         _time: time,
         _round: mkRound(params.wordList, time),
     };
+}
+
+export function getGameListLen(g: Game): number {
+	return g.wordList.containment.length;
 }
 
 export function setTime(g: Game, time: number): Game {
