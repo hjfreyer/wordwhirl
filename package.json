@@ -57,6 +57,11 @@
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
+    "globals": {
+      "ts-jest": {
+        "enableTsDiagnostics": true
+      }
+    },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "moduleFileExtensions": [
       "ts",
