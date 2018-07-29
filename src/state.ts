@@ -2,34 +2,11 @@
 import * as game from './game';
 import * as t from './types';
 
-export interface State {
-	time: number
-//	g: game.Game
-}
+// Input.
 
-export type UiButtonName = "backspace" | "shuffle" | "submit" | "new_round" | "new_game";
 
-export interface UiClickAction {
-    kind: "ui_click"
-    button: UiButtonName
-}
 
-export interface TileClickAction {
-    kind: "tile_click"
-    position: t.Position
-}
-
-export interface SetTimeAction {
-    kind: "set_time"
-    timeMillis: number
-}
-
-export interface KeystrokeAction {
-    kind: "keystroke"
-    event: KeyboardEvent
-}
-
-export type Action = UiClickAction | TileClickAction | SetTimeAction | KeystrokeAction
+// Output.
 
 export type ViewActions = BeginGame | BeginRound | SetStuff | IndicateWrong |
 	Reveal | Repeat| RoundOver | GameOver;
@@ -40,13 +17,13 @@ export interface BeginGame {
 
 export interface BeginRound {
 	kind: "begin_round"
-	
+
 	answers: string[]
 }
 
 export interface SetStuff {
 	kind: "set_stuff"
-	
+
 	score: number
 	timeLeft: number
 	suggesting: string[]
@@ -64,7 +41,7 @@ export interface Reveal {
 
 export interface Repeat {
 	kind: "repeat"
-	answerIdx: number	
+	answerIdx: number
 }
 
 export interface RoundOver {
@@ -73,6 +50,28 @@ export interface RoundOver {
 
 export interface GameOver {
 	kind: "game_over"
+}
+
+interface State {
+	g: game.Game
+}
+
+export function initState(params: game.GameParams, time: number): [State, ViewActions[]] {
+  const g = game.newGame(params, time);
+  return [{
+    g: g,
+  }, []];
+}
+
+export function nextState(s: State, a: Action): [State, ViewActions[]] {
+  switch (a.kind) {
+    case UiButton.BACKSPACE:
+      return backspace(s);
+  }
+}
+
+function backspace(s: State): [State, ViewActions[]] {
+  return [s, []];
 }
 
 export interface View {
@@ -94,7 +93,7 @@ export interface View {
 export interface DomInfo {}
 
 /*export function getInitialState(): State {
-	
+
 }*/
 
 export function applyAction(s: State, d: DomInfo, n: Action): State {
@@ -167,7 +166,7 @@ function typeChar(g: game.Game, c: string): game.Game {
 export function getView(s: State): View {
 	return {time:s.time};
 /*	const g = s.g;
-	
+
     let suggesting: string[] = new Array(6).fill('');
     let available: string[] = new Array(6).fill('');
 

@@ -6,6 +6,31 @@ import * as t from './types';
 import { StatusOr, Ok, Error } from './util';
 import * as rs from 'random-seed';
 
+// Input actions.
+
+export type Action = {kind: UiButton} | TileClickAction | SetTimeAction
+
+export enum UiButton {
+  BACKSPACE,
+  SHUFFLE,
+  SUBMIT,
+  NEW_ROUND,
+  NEW_GAME,
+}
+
+export interface TileClickAction {
+    kind: "tile_click"
+    position: t.Position
+}
+
+export interface SetTimeAction {
+    kind: "set_time"
+    timeMillis: number
+}
+
+// Outputs.
+
+export type OutputAction = Game ;
 
 export interface GameParams {
     wordList: t.WordList

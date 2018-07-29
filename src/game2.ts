@@ -6,16 +6,51 @@ import * as t from './types';
 import { StatusOr, Ok, Error } from './util';
 import * as rs from 'random-seed';
 
+// Input actions.
+
+export type Action = {kind: UiButton} | TileClickAction | SetTimeAction
+
+export enum UiButton {
+  BACKSPACE,
+  SHUFFLE,
+  SUBMIT,
+  NEW_ROUND,
+  NEW_GAME,
+}
+
+export interface TileClickAction {
+    kind: "tile_click"
+    position: t.Position
+}
+
+export interface SetTimeAction {
+    kind: "set_time"
+    timeMillis: number
+}
+
+// Outputs.
+
+export type OutputAction = DoOutput;
+
+export interface DoOutput {
+  score: number
+  timeLeft: number
+  state: State
+  answers: Answer[]
+  lettersAndPositions: { letter: string, position: t.Position }[]
+  suggestions: number[]
+}
+
+// State.
 
 export interface GameParams {
     wordList: t.WordList
     roundLengthMillis: number
 }
 
-export interface Game {
-    params: GameParams
-    score: number,
-
+interface Game {
+    _params: GameParams
+    _score: number,
     _time: number,
     _round: Round,
 };
@@ -44,21 +79,36 @@ export enum AnswerState {
     Revealed,
 }
 
-export function newGame(params: GameParams, time: number): Game {
-    return {
-        params: Object.assign({}, params),
-        score: 0,
+export type Result = [Game, OutputAction[]];
 
-        _time: time,
-        _round: mkRound(params.wordList, time),
-    };
+export function newGame(params: GameParams, time: number): Result {
+  const g = {
+      _params: Object.assign({}, params),
+      _score: 0,
+      _time: time,
+      _round: mkRound(params.wordList, time),
+  };
+    return [, [
+
+    ]];
+}
+
+function makeOutput(g: Game): DoOutput {
+  return {
+    score: g._score,
+    timeLeft: number
+    state: State
+    answers: Answer[]
+    lettersAndPositions: { letter: string, position: t.Position }[]
+    suggestions: number[]
+  }
 }
 /*
 export function getGameListLen(g: Game): number {
 	return g.params.wordList.containment.length;
 }
 */
-export function setTime(g: Game, time: number): Game {
+export function setTime(g: Game, time: number): Result {
     return iassign(g, g => g._time, () => time);
 }
 
